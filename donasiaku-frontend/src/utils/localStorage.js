@@ -23,6 +23,40 @@ export const logout = () => {
   localStorage.removeItem('isAuthenticated');
 };
 
+// LOGIN FUNCTION - TAMBAHAN INI YANG KURANG
+export const login = (userData) => {
+  setAuthData(userData);
+  return userData;
+};
+
+// REGISTER FUNCTION - OPTIONAL TAPI BAGUS UNTUK CONSISTENCY
+export const register = (userData) => {
+  // Get existing users
+  const users = JSON.parse(localStorage.getItem('users') || '[]');
+  
+  // Check if email already exists
+  const existingUser = users.find(u => u.email === userData.email);
+  if (existingUser) {
+    throw new Error('Email sudah terdaftar');
+  }
+  
+  // Create new user
+  const newUser = {
+    id: Date.now().toString(),
+    name: userData.name,
+    email: userData.email,
+    password: userData.password,
+    role: userData.role,
+    createdAt: new Date().toISOString()
+  };
+  
+  // Save to users array
+  users.push(newUser);
+  localStorage.setItem('users', JSON.stringify(users));
+  
+  return newUser;
+};
+
 // Donasi Management
 export const saveDonasi = (donasi) => {
   const existingDonasi = getDonasi();
