@@ -35,7 +35,7 @@ export const register = async (userData) => {
       users.push(newUser);
       saveUsers(users);
 
-      const { password, ...userWithoutPassword } = newUser;
+      const { ...userWithoutPassword } = newUser;
       resolve(userWithoutPassword);
     }, 500);
   });

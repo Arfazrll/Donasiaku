@@ -15,7 +15,7 @@ const DashboardDonatur = () => {
 
   useEffect(() => {
     loadDonations();
-  }, []);
+  }, );
 
   const loadDonations = () => {
     const savedDonations = JSON.parse(localStorage.getItem('donations') || '[]');
