@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { FiUser, FiMail, FiLock, FiAlertCircle, FiCheckCircle } from 'react-icons/fi';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
-import { register } from '../../services/authServices';
+import { register } from '../../services/authService';
 import { validateEmail, validatePassword } from '../../utils/validation';
 
 const Register = () => {

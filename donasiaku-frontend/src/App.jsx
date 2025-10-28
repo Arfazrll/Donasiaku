@@ -1,6 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/layout/Layout';
+import DashboardLayout from './components/layout/DashboardLayout';
 import Home from './pages/Home';
+import About from './pages/About';
 import Login from './features/auth/Login';
 import Register from './features/auth/Register';
 import DashboardDonatur from './features/donatur/DashboardDonatur';
@@ -9,7 +11,6 @@ import EditDonasi from './features/donatur/EditDonasi';
 import NotFound from './pages/NotFound';
 import { isAuthenticated, getUserRole } from './utils/localStorage';
 
-// Protected Route Component
 const ProtectedRoute = ({ children, requiredRole }) => {
   if (!isAuthenticated()) {
     return <Navigate to="/login" replace />;
@@ -26,12 +27,17 @@ function App() {
   return (
     <Router>
       <Routes>
+        {/* Public Routes */}
         <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />
+          <Route path="about" element={<About />} />
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
-          
-          {/* Protected Routes - Donatur */}
+          <Route path="*" element={<NotFound />} />
+        </Route>
+
+        {/* Dashboard Routes - dengan DashboardLayout */}
+        <Route path="/" element={<DashboardLayout />}>
           <Route 
             path="dashboard-donatur" 
             element={
@@ -56,8 +62,6 @@ function App() {
               </ProtectedRoute>
             } 
           />
-          
-          <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>
     </Router>
