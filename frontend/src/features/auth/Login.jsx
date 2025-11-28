@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
 import { login } from '../../services/authService';
@@ -8,17 +8,18 @@ const Login = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    role: 'donatur'
   });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  
-  // Untuk animasi fade-in
-  const [isMounted, setIsMounted] = useState(false);
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+    setError(''); // Clear error when user types
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,157 +27,141 @@ const Login = () => {
     setLoading(true);
 
     try {
-      // Login menggunakan authService
-      const user = await login(formData.email, formData.password);
+      const response = await login(formData.email, formData.password);
 
-      // Cek apakah role sesuai
-      if (user.role !== formData.role) {
-        setError(`Anda terdaftar sebagai ${user.role}, bukan ${formData.role}`);
-        setLoading(false);
-        return;
-      }
-
-      // Redirect berdasarkan role
-      if (user.role === 'donatur') {
-        navigate('/dashboard-donatur');
+      if (response.success) {
+        // Redirect based on role
+        const user = response.data.user;
+        if (user.role === 'donatur') {
+          navigate('/donatur/dashboard');
+        } else if (user.role === 'penerima') {
+          navigate('/penerima/dashboard');
+        } else {
+          navigate('/');
+        }
       } else {
-        navigate('/dashboard-penerima');
+        setError(response.message || 'Login failed');
       }
     } catch (err) {
-      setError(err.message || 'Email, password, atau role tidak valid');
+      setError(err.message || 'Invalid email or password');
+    } finally {
       setLoading(false);
     }
   };
 
   return (
-    // Padding atas (pt-40) agar tidak tertutup navbar
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50 flex items-center justify-center pt-40 pb-20 px-6">
-      
-      {/* Wrapper untuk animasi */}
-      <div className={`w-full max-w-md transition-all duration-700 ease-out ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-        
-        {/* --- REVISI UTAMA --- */}
-        {/* Mengganti struktur kartu agar sama seperti Register.jsx */}
-        {/* Menghapus 'overflow-hidden' dan menambahkan 'p-8' */}
-        <div className="bg-white rounded-3xl shadow-2xl p-8">
-          
-          {/* Header Teks (menggantikan header biru) */}
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-800 mb-2">Login ke Donasiku</h2>
-            <p className="text-gray-600">Masuk untuk mulai berdonasi</p>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100">
+      <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8 m-4">
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-extrabold text-gray-900 mb-2">
+            Login ke Donasiku
+          </h2>
+          <p className="text-gray-600">
+            Belum punya akun?{' '}
+            <Link to="/register" className="text-blue-600 font-semibold hover:underline">
+              Daftar sekarang
+            </Link>
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {error && (
+            <div className="rounded-lg bg-red-50 p-4 border border-red-200">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm font-medium text-red-800">{error}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Email Input */}
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+              Email
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <FiMail className="text-gray-400" />
+              </div>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                placeholder="Masukkan email Anda"
+                value={formData.email}
+                onChange={handleChange}
+                disabled={loading}
+              />
+            </div>
           </div>
 
-          {/* Form */}
-          {/* Menghapus 'p-8' dari sini karena sudah ada di parent */}
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm transition-all animate-pulse">
-                {error}
+          {/* Password Input */}
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+              Password
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <FiLock className="text-gray-400" />
               </div>
+              <input
+                id="password"
+                name="password"
+                type={showPassword ? 'text' : 'password'}
+                autoComplete="current-password"
+                required
+                className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                placeholder="Masukkan password Anda"
+                value={formData.password}
+                onChange={handleChange}
+                disabled={loading}
+              />
+              <button
+                type="button"
+                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? (
+                  <FiEyeOff className="text-gray-400 hover:text-gray-600" />
+                ) : (
+                  <FiEye className="text-gray-400 hover:text-gray-600" />
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3 px-4 border border-transparent rounded-lg shadow-sm text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? (
+              <span className="flex items-center justify-center">
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Loading...
+              </span>
+            ) : (
+              'Login'
             )}
-
-            {/* Role Selector */}
-            <div>
-              <label className="block text-sm font-bold text-gray-900 mb-3">
-                Login Sebagai
-              </label>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setFormData({ ...formData, role: 'donatur' })}
-                  className={`py-3 px-4 rounded-xl font-semibold transition-all duration-200 ${
-                    formData.role === 'donatur'
-                      ? 'bg-gradient-to-r from-[#007EFF] to-[#0063FF] text-white shadow-lg scale-105'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                   Donatur
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setFormData({ ...formData, role: 'penerima' })}
-                  className={`py-3 px-4 rounded-xl font-semibold transition-all duration-200 ${
-                    formData.role === 'penerima'
-                      ? 'bg-gradient-to-r from-[#007EFF] to-[#0063FF] text-white shadow-lg scale-105'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                   Penerima
-                </button>
-              </div>
-            </div>
-
-            {/* Email */}
-            <div>
-              <label className="block text-sm font-bold text-gray-900 mb-2">
-                Email *
-              </label>
-              <div className="relative group">
-                <FiMail className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl transition-colors group-focus-within:text-[#007EFF]" />
-                <input
-                  type="email"
-                  required
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="email@example.com"
-                  className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#007EFF] focus:ring-4 focus:ring-[#007EFF]/10 transition-all"
-                />
-              </div>
-            </div>
-
-            {/* Password */}
-            <div>
-              <label className="block text-sm font-bold text-gray-900 mb-2">
-                Password *
-              </label>
-              <div className="relative group">
-                <FiLock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl transition-colors group-focus-within:text-[#007EFF]" />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  placeholder="••••••••"
-                  className="w-full pl-12 pr-12 py-3 border-2 border-gray-200 rounded-xl focus:border-[#007EFF] focus:ring-4 focus:ring-[#007EFF]/10 transition-all"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showPassword ? <FiEyeOff className="text-xl" /> : <FiEye className="text-xl" />}
-                </button>
-              </div>
-            </div>
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-4 bg-gradient-to-r from-[#007EFF] to-[#0063FF] text-white font-bold rounded-xl hover:shadow-xl hover:shadow-[#007EFF]/30 transition-all hover:scale-[1.03] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Loading...' : 'Login'}
-            </button>
-
-            {/* Register Link */}
-            <p className="text-center text-gray-600">
-              Belum punya akun?{' '}
-              <Link to="/register" className="text-[#007EFF] font-semibold hover:underline">
-                Daftar di sini
-              </Link>
-            </p>
-
-            {/* Demo Info */}
-            <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
-              <p className="text-sm font-semibold text-yellow-800 mb-1">Demo Login:</p>
-              <p className="text-xs text-yellow-700">Buat akun baru atau gunakan akun yang sudah Anda daftarkan</p>
-            </div>
-          </form>
-        </div>
+          </button>
+        </form>
 
         {/* Back to Home */}
         <div className="text-center mt-6">
-          <Link to="/" className="text-gray-600 hover:text-[#007EFF] font-semibold transition-colors">
+          <Link to="/" className="text-gray-600 hover:text-blue-600 font-medium transition-colors">
             ← Kembali ke Home
           </Link>
         </div>

@@ -3,251 +3,310 @@
 namespace App\Http\Controllers;
 
 use App\Models\Donation;
-use App\Http\Requests\StoreDonationRequest;
-use App\Http\Requests\UpdateDonationRequest;
-use App\Http\Resources\DonationResource;
-use App\Http\Resources\DonationCollection;
 use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class DonationController extends Controller
 {
-    public function index(Request $request): JsonResponse
-    {
-        $query = Donation::with('user');
-
-        if ($request->has('status')) {
-            $query->where('status', $request->status);
-        }
-
-        if ($request->has('kategori')) {
-            $query->where('kategori', $request->kategori);
-        }
-
-        if ($request->has('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('nama', 'like', "%{$search}%")
-                  ->orWhere('deskripsi', 'like', "%{$search}%")
-                  ->orWhere('lokasi', 'like', "%{$search}%");
-            });
-        }
-
-        $perPage = $request->get('per_page', 15);
-        $donations = $query->orderBy('created_at', 'desc')->paginate($perPage);
-
-        return response()->json([
-            'success' => true,
-            'data' => new DonationCollection($donations),
-        ], 200);
-    }
-
-    public function store(StoreDonationRequest $request): JsonResponse
+    /**
+     * Get all donations (Public)
+     */
+    public function index(Request $request)
     {
         try {
-            DB::beginTransaction();
+            $perPage = $request->input('per_page', 15);
+            $status = $request->input('status');
+            $kategori = $request->input('kategori');
+            $search = $request->input('search');
+
+            $query = Donation::with('donatur:id,name,email,phone');
+
+            // Filter by status
+            if ($status) {
+                $query->where('status', $status);
+            }
+
+            // Filter by kategori
+            if ($kategori) {
+                $query->where('kategori', $kategori);
+            }
+
+            // Search by nama or deskripsi
+            if ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('nama', 'like', "%{$search}%")
+                      ->orWhere('deskripsi', 'like', "%{$search}%");
+                });
+            }
+
+            $donations = $query->orderBy('created_at', 'desc')->paginate($perPage);
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'data' => $donations->items(),
+                    'meta' => [
+                        'total' => $donations->total(),
+                        'per_page' => $donations->perPage(),
+                        'current_page' => $donations->currentPage(),
+                        'last_page' => $donations->lastPage(),
+                        'from' => $donations->firstItem(),
+                        'to' => $donations->lastItem(),
+                    ],
+                ],
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch donations: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get donation by ID (Public)
+     */
+    public function show($id)
+    {
+        try {
+            $donation = Donation::with('donatur:id,name,email,phone')->findOrFail($id);
+
+            return response()->json([
+                'success' => true,
+                'data' => $donation,
+            ], 200);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Donation not found',
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch donation: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Create new donation (Protected)
+     */
+    public function store(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'nama' => 'required|string|max:255',
+                'kategori' => 'required|in:makanan,pakaian,elektronik,furnitur,buku,lainnya',
+                'jumlah' => 'required|integer|min:1',
+                'deskripsi' => 'required|string',
+                'lokasi' => 'required|string|max:255',
+                'image' => 'nullable|string',
+            ]);
 
             $donation = Donation::create([
                 'user_id' => Auth::id(),
-                'nama' => $request->nama,
-                'kategori' => $request->kategori,
-                'jumlah' => $request->jumlah,
-                'deskripsi' => $request->deskripsi,
-                'lokasi' => $request->lokasi,
-                'image' => $request->image,
+                'nama' => $validated['nama'],
+                'kategori' => $validated['kategori'],
+                'jumlah' => $validated['jumlah'],
+                'deskripsi' => $validated['deskripsi'],
+                'lokasi' => $validated['lokasi'],
+                'image' => $validated['image'] ?? null,
                 'status' => 'aktif',
             ]);
 
-            DB::commit();
+            $donation->load('donatur:id,name,email,phone');
 
             return response()->json([
                 'success' => true,
                 'message' => 'Donasi berhasil dibuat',
-                'data' => new DonationResource($donation->load('user')),
+                'data' => $donation,
             ], 201);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-
+        } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal membuat donasi',
-                'error' => $e->getMessage(),
+                'message' => 'Validation error',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create donation: ' . $e->getMessage(),
             ], 500);
         }
     }
 
-    public function show(string $id): JsonResponse
-    {
-        $donation = Donation::with('user')->find($id);
-
-        if (!$donation) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Donasi tidak ditemukan',
-            ], 404);
-        }
-
-        return response()->json([
-            'success' => true,
-            'data' => new DonationResource($donation),
-        ], 200);
-    }
-
-    public function update(UpdateDonationRequest $request, string $id): JsonResponse
+    /**
+     * Update donation (Protected - Owner Only)
+     */
+    public function update(Request $request, $id)
     {
         try {
-            $donation = Donation::find($id);
+            $donation = Donation::findOrFail($id);
 
-            if (!$donation) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Donasi tidak ditemukan',
-                ], 404);
-            }
-
+            // Check if user is the owner
             if ($donation->user_id !== Auth::id()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Anda tidak memiliki akses untuk mengupdate donasi ini',
+                    'message' => 'Unauthorized to update this donation',
                 ], 403);
             }
 
-            DB::beginTransaction();
+            $validated = $request->validate([
+                'nama' => 'sometimes|required|string|max:255',
+                'kategori' => 'sometimes|required|in:makanan,pakaian,elektronik,furnitur,buku,lainnya',
+                'jumlah' => 'sometimes|required|integer|min:1',
+                'deskripsi' => 'sometimes|required|string',
+                'lokasi' => 'sometimes|required|string|max:255',
+                'image' => 'nullable|string',
+                'status' => 'sometimes|required|in:aktif,selesai',
+            ]);
 
-            $donation->update($request->only([
-                'nama',
-                'kategori',
-                'jumlah',
-                'deskripsi',
-                'lokasi',
-                'image',
-                'status',
-            ]));
-
-            DB::commit();
+            $donation->update($validated);
+            $donation->load('donatur:id,name,email,phone');
 
             return response()->json([
                 'success' => true,
                 'message' => 'Donasi berhasil diupdate',
-                'data' => new DonationResource($donation->load('user')),
+                'data' => $donation,
             ], 200);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal mengupdate donasi',
-                'error' => $e->getMessage(),
+                'message' => 'Donation not found',
+            ], 404);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update donation: ' . $e->getMessage(),
             ], 500);
         }
     }
 
-    public function destroy(string $id): JsonResponse
+    /**
+     * Delete donation (Protected - Owner Only)
+     */
+    public function destroy($id)
     {
         try {
-            $donation = Donation::find($id);
+            $donation = Donation::findOrFail($id);
 
-            if (!$donation) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Donasi tidak ditemukan',
-                ], 404);
-            }
-
+            // Check if user is the owner
             if ($donation->user_id !== Auth::id()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Anda tidak memiliki akses untuk menghapus donasi ini',
+                    'message' => 'Unauthorized to delete this donation',
                 ], 403);
             }
 
-            DB::beginTransaction();
-
             $donation->delete();
-
-            DB::commit();
 
             return response()->json([
                 'success' => true,
                 'message' => 'Donasi berhasil dihapus',
             ], 200);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal menghapus donasi',
-                'error' => $e->getMessage(),
+                'message' => 'Donation not found',
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete donation: ' . $e->getMessage(),
             ], 500);
         }
     }
 
-    public function myDonations(Request $request): JsonResponse
+    /**
+     * Get current user's donations (Protected)
+     */
+    public function myDonations(Request $request)
     {
-        $query = Donation::with('user')->where('user_id', Auth::id());
-
-        if ($request->has('status')) {
-            $query->where('status', $request->status);
-        }
-
-        $perPage = $request->get('per_page', 15);
-        $donations = $query->orderBy('created_at', 'desc')->paginate($perPage);
-
-        return response()->json([
-            'success' => true,
-            'data' => new DonationCollection($donations),
-        ], 200);
-    }
-
-    public function updateStatus(Request $request, string $id): JsonResponse
-    {
-        $request->validate([
-            'status' => 'required|in:aktif,selesai',
-        ]);
-
         try {
-            $donation = Donation::find($id);
+            $perPage = $request->input('per_page', 15);
+            $status = $request->input('status');
 
-            if (!$donation) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Donasi tidak ditemukan',
-                ], 404);
+            $query = Donation::where('user_id', Auth::id())
+                ->with('donatur:id,name,email,phone');
+
+            if ($status) {
+                $query->where('status', $status);
             }
 
+            $donations = $query->orderBy('created_at', 'desc')->paginate($perPage);
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'data' => $donations->items(),
+                    'meta' => [
+                        'total' => $donations->total(),
+                        'per_page' => $donations->perPage(),
+                        'current_page' => $donations->currentPage(),
+                        'last_page' => $donations->lastPage(),
+                        'from' => $donations->firstItem(),
+                        'to' => $donations->lastItem(),
+                    ],
+                ],
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch donations: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Update donation status (Protected - Owner Only)
+     */
+    public function updateStatus(Request $request, $id)
+    {
+        try {
+            $donation = Donation::findOrFail($id);
+
+            // Check if user is the owner
             if ($donation->user_id !== Auth::id()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Anda tidak memiliki akses untuk mengupdate status donasi ini',
+                    'message' => 'Unauthorized to update this donation',
                 ], 403);
             }
 
-            DB::beginTransaction();
-
-            $donation->update([
-                'status' => $request->status,
+            $validated = $request->validate([
+                'status' => 'required|in:aktif,selesai',
             ]);
 
-            DB::commit();
+            $donation->update(['status' => $validated['status']]);
+            $donation->load('donatur:id,name,email,phone');
 
             return response()->json([
                 'success' => true,
                 'message' => 'Status donasi berhasil diupdate',
-                'data' => new DonationResource($donation->load('user')),
+                'data' => $donation,
             ], 200);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal mengupdate status donasi',
-                'error' => $e->getMessage(),
+                'message' => 'Donation not found',
+            ], 404);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update status: ' . $e->getMessage(),
             ], 500);
         }
     }
