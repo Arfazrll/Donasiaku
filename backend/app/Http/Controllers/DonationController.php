@@ -9,9 +9,6 @@ use Illuminate\Validation\ValidationException;
 
 class DonationController extends Controller
 {
-    /**
-     * Get all donations (Public)
-     */
     public function index(Request $request)
     {
         try {
@@ -20,19 +17,16 @@ class DonationController extends Controller
             $kategori = $request->input('kategori');
             $search = $request->input('search');
 
-            $query = Donation::with('donatur:id,name,email,phone');
+            $query = Donation::with('user:id,name,email,phone');
 
-            // Filter by status
             if ($status) {
                 $query->where('status', $status);
             }
 
-            // Filter by kategori
             if ($kategori) {
                 $query->where('kategori', $kategori);
             }
 
-            // Search by nama or deskripsi
             if ($search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('nama', 'like', "%{$search}%")
@@ -64,13 +58,10 @@ class DonationController extends Controller
         }
     }
 
-    /**
-     * Get donation by ID (Public)
-     */
     public function show($id)
     {
         try {
-            $donation = Donation::with('donatur:id,name,email,phone')->findOrFail($id);
+            $donation = Donation::with('user:id,name,email,phone')->findOrFail($id);
 
             return response()->json([
                 'success' => true,
@@ -89,9 +80,6 @@ class DonationController extends Controller
         }
     }
 
-    /**
-     * Create new donation (Protected)
-     */
     public function store(Request $request)
     {
         try {
@@ -115,7 +103,7 @@ class DonationController extends Controller
                 'status' => 'aktif',
             ]);
 
-            $donation->load('donatur:id,name,email,phone');
+            $donation->load('user:id,name,email,phone');
 
             return response()->json([
                 'success' => true,
@@ -136,15 +124,11 @@ class DonationController extends Controller
         }
     }
 
-    /**
-     * Update donation (Protected - Owner Only)
-     */
     public function update(Request $request, $id)
     {
         try {
             $donation = Donation::findOrFail($id);
 
-            // Check if user is the owner
             if ($donation->user_id !== Auth::id()) {
                 return response()->json([
                     'success' => false,
@@ -163,7 +147,7 @@ class DonationController extends Controller
             ]);
 
             $donation->update($validated);
-            $donation->load('donatur:id,name,email,phone');
+            $donation->load('user:id,name,email,phone');
 
             return response()->json([
                 'success' => true,
@@ -189,15 +173,11 @@ class DonationController extends Controller
         }
     }
 
-    /**
-     * Delete donation (Protected - Owner Only)
-     */
     public function destroy($id)
     {
         try {
             $donation = Donation::findOrFail($id);
 
-            // Check if user is the owner
             if ($donation->user_id !== Auth::id()) {
                 return response()->json([
                     'success' => false,
@@ -224,9 +204,6 @@ class DonationController extends Controller
         }
     }
 
-    /**
-     * Get current user's donations (Protected)
-     */
     public function myDonations(Request $request)
     {
         try {
@@ -234,7 +211,7 @@ class DonationController extends Controller
             $status = $request->input('status');
 
             $query = Donation::where('user_id', Auth::id())
-                ->with('donatur:id,name,email,phone');
+                ->with('user:id,name,email,phone');
 
             if ($status) {
                 $query->where('status', $status);
@@ -264,15 +241,11 @@ class DonationController extends Controller
         }
     }
 
-    /**
-     * Update donation status (Protected - Owner Only)
-     */
     public function updateStatus(Request $request, $id)
     {
         try {
             $donation = Donation::findOrFail($id);
 
-            // Check if user is the owner
             if ($donation->user_id !== Auth::id()) {
                 return response()->json([
                     'success' => false,
@@ -285,7 +258,7 @@ class DonationController extends Controller
             ]);
 
             $donation->update(['status' => $validated['status']]);
-            $donation->load('donatur:id,name,email,phone');
+            $donation->load('user:id,name,email,phone');
 
             return response()->json([
                 'success' => true,

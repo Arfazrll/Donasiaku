@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -27,9 +26,21 @@ class Donation extends Model
         'updated_at' => 'datetime',
     ];
 
+    protected $appends = ['donatur'];
+
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function getDonaturAttribute()
+    {
+        return [
+            'id' => $this->user->id,
+            'name' => $this->user->name,
+            'email' => $this->user->email,
+            'phone' => $this->user->phone,
+        ];
     }
 
     public function scopeAktif($query)

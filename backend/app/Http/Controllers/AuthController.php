@@ -4,15 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    /**
-     * Register new user (Donatur or Penerima)
-     */
     public function register(Request $request)
     {
         try {
@@ -62,9 +58,6 @@ class AuthController extends Controller
         }
     }
 
-    /**
-     * Login user
-     */
     public function login(Request $request)
     {
         try {
@@ -82,7 +75,6 @@ class AuthController extends Controller
                 ], 401);
             }
 
-            // Revoke all previous tokens
             $user->tokens()->delete();
 
             $token = $user->createToken('auth_token')->plainTextToken;
@@ -115,9 +107,6 @@ class AuthController extends Controller
         }
     }
 
-    /**
-     * Logout user
-     */
     public function logout(Request $request)
     {
         try {
@@ -135,9 +124,6 @@ class AuthController extends Controller
         }
     }
 
-    /**
-     * Get current authenticated user
-     */
     public function me(Request $request)
     {
         try {
