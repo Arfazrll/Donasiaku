@@ -17,6 +17,7 @@ const EditDonasi = () => {
   });
   const [imagePreview, setImagePreview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const categories = [
     { value: 'pakaian', label: 'Pakaian', icon: '👕' },
@@ -28,27 +29,43 @@ const EditDonasi = () => {
   ];
 
   useEffect(() => {
-  const fetchDonation = async () => {
-    try {
-      const donation = await getDonasiByIdService(id);
-      setFormData(donation);
-      if (donation.image) {
-        setImagePreview(donation.image);
+    const fetchDonation = async () => {
+      try {
+        setLoading(true);
+        const donation = await getDonasiByIdService(id);
+        setFormData({
+          nama: donation.nama,
+          kategori: donation.kategori,
+          jumlah: donation.jumlah,
+          deskripsi: donation.deskripsi,
+          lokasi: donation.lokasi,
+          status: donation.status,
+          image: donation.image
+        });
+        if (donation.image) {
+          setImagePreview(donation.image);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Gagal memuat data donasi');
+        navigate('/dashboard-donatur');
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Error:', error);
-      navigate('/dashboard-donatur');
-    }
-  };
+    };
 
-  if (id) {
-    fetchDonation();
-  }
-}, [id, navigate]);
+    if (id) {
+      fetchDonation();
+    }
+  }, [id, navigate]);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Ukuran file maksimal 5MB');
+        return;
+      }
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result);
@@ -59,23 +76,33 @@ const EditDonasi = () => {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  setIsSubmitting(true);
+    e.preventDefault();
+    setIsSubmitting(true);
 
-  try {
-    await updateDonasiService(id, formData);
-    alert('Donasi berhasil diupdate!');
-    navigate('/dashboard-donatur');
-  } catch (error) {
-    alert(error.message || 'Gagal mengupdate donasi');
-  } finally {
-    setIsSubmitting(false);
+    try {
+      await updateDonasiService(id, formData);
+      alert('Donasi berhasil diupdate!');
+      navigate('/dashboard-donatur');
+    } catch (error) {
+      alert(error.message || 'Gagal mengupdate donasi');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+          <p className="mt-4 text-gray-600">Memuat data donasi...</p>
+        </div>
+      </div>
+    );
   }
-};
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-      {/* Header */}
       <div className="bg-gradient-to-r from-[#00306C] to-[#0063FF] text-white">
         <div className="max-w-4xl mx-auto px-6 md:px-8 pt-24 pb-12">
           <button
@@ -95,10 +122,8 @@ const EditDonasi = () => {
         </div>
       </div>
 
-      {/* Form Container */}
       <div className="max-w-4xl mx-auto px-6 md:px-8 py-8">
         <form onSubmit={handleSubmit} className="bg-white rounded-3xl shadow-2xl overflow-hidden">
-          {/* Image Upload Section */}
           <div className="bg-gradient-to-br from-blue-50 to-cyan-50 p-8 border-b border-gray-200">
             <label className="block mb-3">
               <span className="flex items-center space-x-2 text-lg font-bold text-gray-900 mb-4">
@@ -144,9 +169,7 @@ const EditDonasi = () => {
             </label>
           </div>
 
-          {/* Form Fields */}
           <div className="p-8 space-y-6">
-            {/* Nama Barang */}
             <div>
               <label className="flex items-center space-x-2 text-sm font-bold text-gray-900 mb-3">
                 <FiPackage className="text-[#007EFF]" />
@@ -161,7 +184,6 @@ const EditDonasi = () => {
               />
             </div>
 
-            {/* Kategori */}
             <div>
               <label className="flex items-center space-x-2 text-sm font-bold text-gray-900 mb-3">
                 <FiPackage className="text-[#007EFF]" />
@@ -186,7 +208,6 @@ const EditDonasi = () => {
               </div>
             </div>
 
-            {/* Jumlah */}
             <div>
               <label className="flex items-center space-x-2 text-sm font-bold text-gray-900 mb-3">
                 <FiPackage className="text-[#007EFF]" />
@@ -202,7 +223,6 @@ const EditDonasi = () => {
               />
             </div>
 
-            {/* Status */}
             <div>
               <label className="flex items-center space-x-2 text-sm font-bold text-gray-900 mb-3">
                 <FiPackage className="text-[#007EFF]" />
@@ -218,7 +238,7 @@ const EditDonasi = () => {
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
-                  <span>🟢 Aktif</span>
+                  <span>Aktif</span>
                 </button>
                 <button
                   type="button"
@@ -229,12 +249,11 @@ const EditDonasi = () => {
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
-                  <span>✅ Selesai</span>
+                  <span>Selesai</span>
                 </button>
               </div>
             </div>
 
-            {/* Lokasi */}
             <div>
               <label className="flex items-center space-x-2 text-sm font-bold text-gray-900 mb-3">
                 <FiMapPin className="text-[#007EFF]" />
@@ -249,7 +268,6 @@ const EditDonasi = () => {
               />
             </div>
 
-            {/* Deskripsi */}
             <div>
               <label className="flex items-center space-x-2 text-sm font-bold text-gray-900 mb-3">
                 <FiFileText className="text-[#007EFF]" />
@@ -264,7 +282,6 @@ const EditDonasi = () => {
               />
             </div>
 
-            {/* Submit Buttons */}
             <div className="flex space-x-4 pt-6">
               <button
                 type="submit"

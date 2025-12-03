@@ -59,14 +59,12 @@ const FormDonasi = () => {
   return (
     <div className="max-w-4xl mx-auto">
       <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
-        {/* Header */}
         <div className="bg-gradient-to-r from-[#007EFF] to-[#0063FF] text-white px-8 py-6">
           <h2 className="text-2xl font-bold mb-2">Buat Donasi Baru</h2>
           <p className="text-blue-100">Bagikan kebaikan Anda dengan mengisi form di bawah ini</p>
         </div>
 
         <form onSubmit={handleSubmit} className="p-8">
-          {/* Photo Upload */}
           <div className="mb-8">
             <label className="flex items-center space-x-2 text-sm font-bold text-gray-900 mb-3">
               <FiImage className="text-[#007EFF]" />
@@ -111,9 +109,7 @@ const FormDonasi = () => {
             </div>
           </div>
 
-          {/* Form Fields Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Nama Barang */}
             <div className="md:col-span-2">
               <label className="flex items-center space-x-2 text-sm font-bold text-gray-900 mb-3">
                 <FiPackage className="text-[#007EFF]" />
@@ -129,7 +125,6 @@ const FormDonasi = () => {
               />
             </div>
 
-            {/* Kategori */}
             <div className="md:col-span-2">
               <label className="flex items-center space-x-2 text-sm font-bold text-gray-900 mb-3">
                 <FiPackage className="text-[#007EFF]" />
@@ -154,7 +149,6 @@ const FormDonasi = () => {
               </div>
             </div>
 
-            {/* Jumlah */}
             <div>
               <label className="flex items-center space-x-2 text-sm font-bold text-gray-900 mb-3">
                 <FiPackage className="text-[#007EFF]" />
@@ -170,7 +164,6 @@ const FormDonasi = () => {
               />
             </div>
 
-            {/* Lokasi */}
             <div>
               <label className="flex items-center space-x-2 text-sm font-bold text-gray-900 mb-3">
                 <FiMapPin className="text-[#007EFF]" />
@@ -186,7 +179,6 @@ const FormDonasi = () => {
               />
             </div>
 
-            {/* Deskripsi */}
             <div className="md:col-span-2">
               <label className="flex items-center space-x-2 text-sm font-bold text-gray-900 mb-3">
                 <FiFileText className="text-[#007EFF]" />
@@ -203,7 +195,6 @@ const FormDonasi = () => {
             </div>
           </div>
 
-          {/* Buttons */}
           <div className="flex space-x-4 mt-8">
             <button
               type="submit"

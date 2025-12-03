@@ -14,13 +14,13 @@ class UpdateDonationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'nama' => 'sometimes|required|string|max:200',
-            'kategori' => 'sometimes|required|in:pakaian,elektronik,buku,mainan,perabotan,lainnya',
-            'jumlah' => 'sometimes|required|integer|min:1',
+            'nama' => 'sometimes|required|string|max:255',
+            'kategori' => 'sometimes|required|string|in:pakaian,elektronik,buku,mainan,perabotan,lainnya',
+            'jumlah' => 'sometimes|required|integer|min:0',
             'deskripsi' => 'sometimes|required|string',
-            'lokasi' => 'sometimes|required|string|max:255',
+            'lokasi' => 'sometimes|required|string',
             'image' => 'nullable|string',
-            'status' => 'sometimes|required|in:aktif,selesai',
+            'status' => 'sometimes|required|string|in:aktif,selesai',
         ];
     }
 
@@ -28,15 +28,14 @@ class UpdateDonationRequest extends FormRequest
     {
         return [
             'nama.required' => 'Nama barang harus diisi',
-            'nama.max' => 'Nama barang maksimal 200 karakter',
+            'nama.max' => 'Nama barang maksimal 255 karakter',
             'kategori.required' => 'Kategori harus dipilih',
             'kategori.in' => 'Kategori tidak valid',
             'jumlah.required' => 'Jumlah harus diisi',
             'jumlah.integer' => 'Jumlah harus berupa angka',
-            'jumlah.min' => 'Jumlah minimal 1',
+            'jumlah.min' => 'Jumlah minimal 0',
             'deskripsi.required' => 'Deskripsi harus diisi',
             'lokasi.required' => 'Lokasi pengambilan harus diisi',
-            'lokasi.max' => 'Lokasi maksimal 255 karakter',
             'status.in' => 'Status tidak valid',
         ];
     }

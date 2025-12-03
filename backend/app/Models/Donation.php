@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
-
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Donation extends Model
 {
@@ -27,23 +27,8 @@ class Donation extends Model
         'updated_at' => 'datetime',
     ];
 
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
-    }
-
-    public function scopeAktif($query)
-    {
-        return $query->where('status', 'aktif');
-    }
-
-    public function scopeSelesai($query)
-    {
-        return $query->where('status', 'selesai');
-    }
-
-    public function scopeByUser($query, $userId)
-    {
-        return $query->where('user_id', $userId);
     }
 }

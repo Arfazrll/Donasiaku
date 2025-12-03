@@ -7,7 +7,10 @@ const api = axios.create({
     'Accept': 'application/json',
   },
   withCredentials: true,
+  timeout: 10000,
 });
+
+let isRefreshing = false;
 
 api.interceptors.request.use(
   (config) => {
@@ -24,13 +27,22 @@ api.interceptors.request.use(
 
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (error.response?.status === 401 && !originalRequest._retry && !isRefreshing) {
+      isRefreshing = true;
+      originalRequest._retry = true;
+
       localStorage.removeItem('auth_token');
       localStorage.removeItem('user');
       localStorage.removeItem('isAuthenticated');
+      
       window.location.href = '/login';
+      
+      isRefreshing = false;
     }
+
     return Promise.reject(error);
   }
 );

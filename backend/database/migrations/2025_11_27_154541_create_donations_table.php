@@ -11,19 +11,14 @@ return new class extends Migration
         Schema::create('donations', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->string('nama', 200);
-            $table->enum('kategori', ['pakaian', 'elektronik', 'buku', 'mainan', 'perabotan', 'lainnya']);
-            $table->integer('jumlah')->default(1);
+            $table->string('nama');
+            $table->string('kategori');
+            $table->integer('jumlah');
             $table->text('deskripsi');
-            $table->string('lokasi', 255);
-            $table->text('image')->nullable();
+            $table->string('lokasi');
+            $table->longText('image')->nullable();
             $table->enum('status', ['aktif', 'selesai'])->default('aktif');
             $table->timestamps();
-            
-            $table->index('user_id');
-            $table->index('status');
-            $table->index('kategori');
-            $table->index('created_at');
         });
     }
 

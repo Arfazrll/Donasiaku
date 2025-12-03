@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getMyDonasi } from "../../services/donasiService";
-import Card from "../../components/ui/Card";
+import { FiEdit2, FiPackage, FiMapPin, FiCalendar } from 'react-icons/fi';
 
 const DaftarDonasi = () => {
   const [donasi, setDonasi] = useState([]);
@@ -9,22 +9,52 @@ const DaftarDonasi = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    let mounted = true;
+
     const fetchDonasi = async () => {
       try {
+        setLoading(true);
         const data = await getMyDonasi();
-        setDonasi(data);
+        if (mounted) {
+          setDonasi(data);
+        }
       } catch (error) {
         console.error("Gagal mengambil data donasi:", error);
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchDonasi();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
+  const getCategoryIcon = (category) => {
+    const icons = {
+      'pakaian': '👕',
+      'elektronik': '💻',
+      'buku': '📚',
+      'mainan': '🧸',
+      'perabotan': '🛋️',
+      'lainnya': '📦'
+    };
+    return icons[category?.toLowerCase()] || '📦';
+  };
+
   if (loading) {
-    return <p className="text-center text-gray-500">Memuat data donasi...</p>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+          <p className="mt-4 text-gray-600">Memuat data donasi...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -38,40 +68,56 @@ const DaftarDonasi = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {donasi.map((item) => (
-            <Card key={item.id} className="shadow-md">
+            <div key={item.id} className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-100">
+              <div className="relative h-48 overflow-hidden bg-gradient-to-br from-blue-100 to-cyan-100">
+                {item.image ? (
+                  <img
+                    src={item.image}
+                    alt={item.nama}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-6xl">
+                    {getCategoryIcon(item.kategori)}
+                  </div>
+                )}
+                <div className="absolute top-3 left-3">
+                  <span className="bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-bold text-gray-700">
+                    {getCategoryIcon(item.kategori)} {item.kategori}
+                  </span>
+                </div>
+              </div>
+
               <div className="p-4">
-                <span className="text-sm bg-green-100 text-green-700 px-2 py-1 rounded">
-                  {item.kategori || "Kategori"}
-                </span>
-
                 <h2 className="font-semibold text-lg mt-2">{item.nama}</h2>
+                <p className="text-sm text-gray-600 line-clamp-2">{item.deskripsi || "-"}</p>
 
-                <p className="text-sm text-gray-600">
-                  {item.deskripsi || "-"}
-                </p>
-
-                <p className="text-sm mt-2">
-                  <strong>Jumlah:</strong> {item.jumlah} pcs
-                </p>
-
-                <p className="text-sm">
-                  <strong>Lokasi:</strong> {item.lokasi}
-                </p>
-
-                <p className="text-sm">
-                  <strong>Tanggal:</strong> {new Date(item.created_at).toLocaleDateString('id-ID')}
-                </p>
+                <div className="space-y-2 mt-3">
+                  <div className="flex items-center space-x-2 text-sm text-gray-600">
+                    <FiPackage className="text-[#007EFF]" />
+                    <span>Jumlah: <span className="font-semibold">{item.jumlah} pcs</span></span>
+                  </div>
+                  <div className="flex items-center space-x-2 text-sm text-gray-600">
+                    <FiMapPin className="text-[#007EFF]" />
+                    <span className="line-clamp-1">{item.lokasi}</span>
+                  </div>
+                  <div className="flex items-center space-x-2 text-sm text-gray-600">
+                    <FiCalendar className="text-[#007EFF]" />
+                    <span>{item.createdAt ? new Date(item.createdAt).toLocaleDateString('id-ID') : '-'}</span>
+                  </div>
+                </div>
 
                 <div className="flex gap-2 mt-4">
                   <button
-                    className="flex-1 px-3 py-2 bg-blue-50 text-[#007EFF] font-semibold rounded-xl hover:bg-blue-100 transition-all"
+                    className="flex-1 flex items-center justify-center space-x-2 px-3 py-2 bg-blue-50 text-[#007EFF] font-semibold rounded-xl hover:bg-blue-100 transition-all"
                     onClick={() => navigate(`/donasi/edit/${item.id}`)}
                   >
-                    Edit
+                    <FiEdit2 />
+                    <span>Edit</span>
                   </button>
                 </div>
               </div>
-            </Card>
+            </div>
           ))}
         </div>
       )}

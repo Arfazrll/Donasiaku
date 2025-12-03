@@ -16,26 +16,36 @@ const DashboardDonatur = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadDonations();
-  }, []);
+    let mounted = true;
 
-  const loadDonations = async () => {
-    try {
-      setLoading(true);
-      const userDonations = await getMyDonasi();
-      setDonations(userDonations);
-      
-      setStats({
-        total: userDonations.length,
-        active: userDonations.filter(d => d.status === 'aktif').length,
-        completed: userDonations.filter(d => d.status === 'selesai').length
-      });
-    } catch (error) {
-      console.error('Error loading donations:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    const loadDonations = async () => {
+      try {
+        setLoading(true);
+        const userDonations = await getMyDonasi();
+        
+        if (mounted) {
+          setDonations(userDonations);
+          setStats({
+            total: userDonations.length,
+            active: userDonations.filter(d => d.status === 'aktif').length,
+            completed: userDonations.filter(d => d.status === 'selesai').length
+          });
+        }
+      } catch (error) {
+        console.error('Error loading donations:', error);
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadDonations();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const handleDelete = async (id) => {
     if (!window.confirm('Apakah Anda yakin ingin menghapus donasi ini?')) {
@@ -45,7 +55,14 @@ const DashboardDonatur = () => {
     try {
       await deleteDonasiService(id);
       alert('Donasi berhasil dihapus!');
-      loadDonations();
+      
+      const userDonations = await getMyDonasi();
+      setDonations(userDonations);
+      setStats({
+        total: userDonations.length,
+        active: userDonations.filter(d => d.status === 'aktif').length,
+        completed: userDonations.filter(d => d.status === 'selesai').length
+      });
     } catch (error) {
       alert(error.message || 'Gagal menghapus donasi');
     }
@@ -82,26 +99,24 @@ const DashboardDonatur = () => {
       'perabotan': '🛋️',
       'lainnya': '📦'
     };
-    return icons[category.toLowerCase()] || '📦';
+    return icons[category?.toLowerCase()] || '📦';
   };
 
   if (loading) {
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-center">
-        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-        <p className="mt-4 text-gray-600">Memuat donasi...</p>
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+          <p className="mt-4 text-gray-600">Memuat donasi...</p>
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
   return (
     <div className="min-h-screen">
-      {/* Hero Section with Stats */}
       <div className="bg-gradient-to-br from-[#00306C] via-[#0063FF] to-[#007EFF] text-white">
         <div className="max-w-7xl mx-auto px-6 md:px-8 py-12">
-          {/* Welcome Section */}
           <div className="mb-8">
             <h1 className="text-4xl md:text-5xl font-bold mb-3">
               Selamat Datang, {user?.name}! 👋
@@ -111,7 +126,6 @@ const DashboardDonatur = () => {
             </p>
           </div>
 
-          {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 hover:bg-white/20 transition-all">
               <div className="flex items-center justify-between mb-4">
@@ -160,7 +174,6 @@ const DashboardDonatur = () => {
           </div>
         </div>
 
-        {/* Wave Separator */}
         <div className="relative">
           <svg viewBox="0 0 1440 100" className="w-full">
             <path fill="#F9FAFB" d="M0,50 Q360,0 720,50 T1440,50 L1440,100 L0,100 Z"></path>
@@ -168,9 +181,7 @@ const DashboardDonatur = () => {
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 md:px-8 py-8">
-        {/* Action Bar */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>
             <h2 className="text-3xl font-bold text-gray-900 mb-2">Daftar Donasi Saya</h2>
@@ -185,7 +196,6 @@ const DashboardDonatur = () => {
           </Link>
         </div>
 
-        {/* Filter Tabs */}
         <div className="flex space-x-2 mb-6 bg-white rounded-xl p-2 shadow-md">
           <button
             onClick={() => setFilter('all')}
@@ -219,7 +229,6 @@ const DashboardDonatur = () => {
           </button>
         </div>
 
-        {/* Donations Grid */}
         {filteredDonations.length === 0 ? (
           <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
             <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -242,7 +251,6 @@ const DashboardDonatur = () => {
                 key={donation.id}
                 className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-100"
               >
-                {/* Image */}
                 <div className="relative h-48 overflow-hidden bg-gradient-to-br from-blue-100 to-cyan-100">
                   {donation.image ? (
                     <img
@@ -265,7 +273,6 @@ const DashboardDonatur = () => {
                   </div>
                 </div>
 
-                {/* Content */}
                 <div className="p-5">
                   <h3 className="text-xl font-bold text-gray-900 mb-2 line-clamp-1">
                     {donation.nama}
@@ -274,7 +281,6 @@ const DashboardDonatur = () => {
                     {donation.deskripsi}
                   </p>
 
-                  {/* Info */}
                   <div className="space-y-2 mb-4">
                     <div className="flex items-center space-x-2 text-sm text-gray-600">
                       <FiPackage className="text-[#007EFF]" />
@@ -286,15 +292,14 @@ const DashboardDonatur = () => {
                     </div>
                     <div className="flex items-center space-x-2 text-sm text-gray-600">
                       <FiCalendar className="text-[#007EFF]" />
-                      <span>{new Date(donation.createdAt).toLocaleDateString('id-ID', {
+                      <span>{donation.createdAt ? new Date(donation.createdAt).toLocaleDateString('id-ID', {
                         day: 'numeric',
                         month: 'long',
                         year: 'numeric'
-                      })}</span>
+                      }) : '-'}</span>
                     </div>
                   </div>
 
-                  {/* Actions */}
                   <div className="flex space-x-2 pt-4 border-t border-gray-100">
                     <Link
                       to={`/donasi/edit/${donation.id}`}

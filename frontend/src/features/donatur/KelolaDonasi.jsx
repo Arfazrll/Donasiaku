@@ -12,26 +12,36 @@ const KelolaDonasi = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let mounted = true;
+
     const fetchData = async () => {
       setLoading(true);
       try {
         if (!user || !user.id) return;
 
         const myDonasi = await getMyDonasi();
-        setDonasiList(myDonasi || []);
+        if (mounted) {
+          setDonasiList(myDonasi || []);
 
-        const allReq = getRequests();
-        const donasiIds = (myDonasi || []).map(d => String(d.id));
-        const incoming = allReq.filter(r => donasiIds.includes(String(r.donasiId)));
-        setRequests(incoming);
+          const allReq = getRequests();
+          const donasiIds = (myDonasi || []).map(d => String(d.id));
+          const incoming = allReq.filter(r => donasiIds.includes(String(r.donasiId)));
+          setRequests(incoming);
+        }
       } catch (err) {
         console.error('Gagal mengambil data kelola donasi', err);
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchData();
+
+    return () => {
+      mounted = false;
+    };
   }, [user]);
 
   const handleAccept = async (req) => {

@@ -1,5 +1,7 @@
 import { donationAPI } from './api';
 
+let abortController = null;
+
 export const createDonasi = async (donasiData) => {
   try {
     const response = await donationAPI.create(donasiData);
@@ -12,9 +14,24 @@ export const createDonasi = async (donasiData) => {
 
 export const getAllDonasi = async (params = {}) => {
   try {
+    if (abortController) {
+      abortController.abort();
+    }
+    abortController = new AbortController();
+
     const response = await donationAPI.getAll(params);
-    return response.data.data.data || [];
+    
+    if (!response.data || !response.data.success) {
+      return [];
+    }
+
+    const donations = response.data.data?.data || [];
+    return Array.isArray(donations) ? donations : [];
   } catch (error) {
+    if (error.name === 'AbortError' || error.code === 'ECONNABORTED') {
+      console.log('Request cancelled');
+      return [];
+    }
     console.error('Error fetching donations:', error);
     return [];
   }
@@ -52,9 +69,27 @@ export const deleteDonasiService = async (id) => {
 
 export const getMyDonasi = async () => {
   try {
+    if (abortController) {
+      abortController.abort();
+    }
+    abortController = new AbortController();
+
     const response = await donationAPI.getMyDonations();
-    return response.data.data.data || [];
+    
+    if (!response.data || !response.data.success) {
+      return [];
+    }
+
+    const donations = response.data.data?.data || [];
+    return Array.isArray(donations) ? donations : [];
   } catch (error) {
+    if (error.name === 'AbortError' || error.code === 'ECONNABORTED') {
+      console.log('Request cancelled');
+      return [];
+    }
+    if (error.response?.status === 401) {
+      return [];
+    }
     console.error('Error fetching my donations:', error);
     return [];
   }

@@ -1,10 +1,8 @@
-// src/features/penerima/DashboardPenerima.jsx
-
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { FiPackage, FiMapPin, FiCalendar, FiSearch, FiAlertCircle } from 'react-icons/fi';
 import { getAuthData } from '../../utils/localStorage';
-import { getAllDonasi } from '../../services/donasiService'; // Pastikan path ini benar
+import { getAllDonasi } from '../../services/donasiService';
 
 const DashboardPenerima = () => {
   const user = getAuthData();
@@ -14,6 +12,7 @@ const DashboardPenerima = () => {
   const [filteredDonations, setFilteredDonations] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [category, setCategory] = useState('all');
+  const [loading, setLoading] = useState(true);
 
   const categories = [
     { value: 'all', label: 'Semua' },
@@ -26,34 +25,35 @@ const DashboardPenerima = () => {
   ];
 
   useEffect(() => {
-  const loadDonations = async () => {
-    try {
-      const donasiList = await getAllDonasi();
-      const activeDonations = donasiList.filter(d => d.status === 'aktif');
-      setAllDonations(activeDonations);
-      setFilteredDonations(activeDonations);
-    } catch (error) {
-      console.error("Gagal memuat donasi:", error);
-    }
-  };
-  loadDonations();
-}, []);
+    const loadDonations = async () => {
+      try {
+        setLoading(true);
+        const donasiList = await getAllDonasi();
+        console.log('All donations:', donasiList);
+        const activeDonations = donasiList.filter(d => d.status === 'aktif');
+        setAllDonations(activeDonations);
+        setFilteredDonations(activeDonations);
+      } catch (error) {
+        console.error("Gagal memuat donasi:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadDonations();
+  }, []);
 
-  // 3. Filter donasi berdasarkan search dan kategori
   useEffect(() => {
     let result = allDonations;
 
-    // Filter berdasarkan kategori
     if (category !== 'all') {
-      result = result.filter(d => d.kategori.toLowerCase() === category.toLowerCase());
+      result = result.filter(d => d.kategori?.toLowerCase() === category.toLowerCase());
     }
 
-    // Filter berdasarkan search term
     if (searchTerm) {
       result = result.filter(d => 
-        d.nama.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        d.deskripsi.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        d.lokasi.toLowerCase().includes(searchTerm.toLowerCase())
+        d.nama?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        d.deskripsi?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        d.lokasi?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -69,12 +69,22 @@ const DashboardPenerima = () => {
       'perabotan': '🛋️',
       'lainnya': '📦'
     };
-    return icons[category.toLowerCase()] || '📦';
+    return icons[category?.toLowerCase()] || '📦';
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+          <p className="mt-4 text-gray-600">Memuat donasi...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">
-      {/* Hero Section - Mengikuti UI Anda */}
       <div className="bg-gradient-to-br from-[#00306C] via-[#0063FF] to-[#007EFF] text-white">
         <div className="max-w-7xl mx-auto px-6 md:px-8 py-12">
           <div className="mb-8">
@@ -86,7 +96,6 @@ const DashboardPenerima = () => {
             </p>
           </div>
 
-          {/* Search Bar - Pengganti Stat Cards */}
           <div className="relative">
             <input 
               type="text"
@@ -99,7 +108,6 @@ const DashboardPenerima = () => {
           </div>
         </div>
 
-        {/* Wave Separator */}
         <div className="relative">
           <svg viewBox="0 0 1440 100" className="w-full">
             <path fill="#F9FAFB" d="M0,50 Q360,0 720,50 T1440,50 L1440,100 L0,100 Z"></path>
@@ -107,9 +115,7 @@ const DashboardPenerima = () => {
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 md:px-8 py-8">
-        {/* Action Bar */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>
             <h2 className="text-3xl font-bold text-gray-900 mb-2">Daftar Donasi Tersedia</h2>
@@ -117,7 +123,6 @@ const DashboardPenerima = () => {
           </div>
         </div>
 
-        {/* Filter Kategori */}
         <div className="flex flex-wrap gap-2 mb-6 bg-white rounded-xl p-2 shadow-md">
           {categories.map(cat => (
             <button
@@ -134,7 +139,6 @@ const DashboardPenerima = () => {
           ))}
         </div>
 
-        {/* Donations Grid */}
         {filteredDonations.length === 0 ? (
           <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
             <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -150,7 +154,6 @@ const DashboardPenerima = () => {
                 key={donation.id}
                 className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-100"
               >
-                {/* Image */}
                 <div className="relative h-48 overflow-hidden bg-gradient-to-br from-blue-100 to-cyan-100">
                   {donation.image ? (
                     <img
@@ -170,7 +173,6 @@ const DashboardPenerima = () => {
                   </div>
                 </div>
 
-                {/* Content */}
                 <div className="p-5">
                   <h3 className="text-xl font-bold text-gray-900 mb-2 line-clamp-1">
                     {donation.nama}
@@ -190,15 +192,14 @@ const DashboardPenerima = () => {
                     </div>
                     <div className="flex items-center space-x-2 text-sm text-gray-600">
                       <FiCalendar className="text-[#007EFF]" />
-                      <span>{new Date(donation.createdAt).toLocaleDateString('id-ID', {
+                      <span>{donation.createdAt ? new Date(donation.createdAt).toLocaleDateString('id-ID', {
                         day: 'numeric',
                         month: 'long',
                         year: 'numeric'
-                      })}</span>
+                      }) : '-'}</span>
                     </div>
                   </div>
 
-                  {/* Action Button */}
                   <div className="pt-4 border-t border-gray-100">
                     <button
                       onClick={() => navigate(`/donasi/detail/${donation.id}`)}
