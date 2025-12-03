@@ -1,4 +1,3 @@
-// Auth Management
 export const setAuthData = (userData) => {
   localStorage.setItem('user', JSON.stringify(userData));
   localStorage.setItem('isAuthenticated', 'true');
@@ -10,7 +9,7 @@ export const getAuthData = () => {
 };
 
 export const saveAuthData = (data) => {
-  localStorage.setItem("authData", JSON.stringify(data));
+  localStorage.setItem('user', JSON.stringify(data));
 };
 
 export const isAuthenticated = () => {
@@ -58,7 +57,6 @@ export const getRequestsByDonasiIds = (donasiIds = []) => {
   return all.filter(r => ids.includes(String(r.donasiId)));
 };
 
-// Messages (chat) management - TETAP PAKAI localStorage
 export const getMessages = () => {
   const m = localStorage.getItem('messages_db');
   return m ? JSON.parse(m) : [];

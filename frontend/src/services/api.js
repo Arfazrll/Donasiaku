@@ -35,19 +35,20 @@ api.interceptors.response.use(
   }
 );
 
+export const authAPI = {
+  register: (data) => api.post('/register', data),
+  login: (data) => api.post('/login', data),
+  logout: () => api.post('/logout'),
+  me: () => api.get('/me'),
+};
+
 export const donationAPI = {
   getAll: (params = {}) => api.get('/donations', { params }),
-  
   getById: (id) => api.get(`/donations/${id}`),
-  
   create: (data) => api.post('/donations', data),
-  
   update: (id, data) => api.put(`/donations/${id}`, data),
-  
   delete: (id) => api.delete(`/donations/${id}`),
-  
   getMyDonations: (params = {}) => api.get('/my-donations', { params }),
-  
   updateStatus: (id, status) => api.patch(`/donations/${id}/status`, { status }),
 };
 
