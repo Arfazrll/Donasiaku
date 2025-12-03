@@ -38,14 +38,13 @@ class DonationController extends Controller
             $perPage = $request->get('per_page', 15);
             $donations = $query->orderBy('created_at', 'desc')->paginate($perPage);
 
-            $formattedData = [];
-            foreach ($donations->items() as $donation) {
-                $formattedData[] = [
+            $formattedData = $donations->map(function($donation) {
+                return [
                     'id' => $donation->id,
                     'userId' => $donation->user_id,
                     'nama' => $donation->nama,
                     'kategori' => $donation->kategori,
-                    'jumlah' => $donation->jumlah,
+                    'jumlah' => (int) $donation->jumlah,
                     'deskripsi' => $donation->deskripsi,
                     'lokasi' => $donation->lokasi,
                     'image' => $donation->image,
@@ -53,7 +52,7 @@ class DonationController extends Controller
                     'createdAt' => $donation->created_at->toIso8601String(),
                     'updatedAt' => $donation->updated_at->toIso8601String(),
                 ];
-            }
+            });
 
             return response()->json([
                 'success' => true,
@@ -83,7 +82,7 @@ class DonationController extends Controller
                         'last_page' => 1,
                     ],
                 ],
-            ], 200);
+            ], 500);
         }
     }
 
@@ -115,14 +114,13 @@ class DonationController extends Controller
             $perPage = $request->get('per_page', 15);
             $donations = $query->orderBy('created_at', 'desc')->paginate($perPage);
 
-            $formattedData = [];
-            foreach ($donations->items() as $donation) {
-                $formattedData[] = [
+            $formattedData = $donations->map(function($donation) {
+                return [
                     'id' => $donation->id,
                     'userId' => $donation->user_id,
                     'nama' => $donation->nama,
                     'kategori' => $donation->kategori,
-                    'jumlah' => $donation->jumlah,
+                    'jumlah' => (int) $donation->jumlah,
                     'deskripsi' => $donation->deskripsi,
                     'lokasi' => $donation->lokasi,
                     'image' => $donation->image,
@@ -130,7 +128,7 @@ class DonationController extends Controller
                     'createdAt' => $donation->created_at->toIso8601String(),
                     'updatedAt' => $donation->updated_at->toIso8601String(),
                 ];
-            }
+            });
 
             return response()->json([
                 'success' => true,
@@ -160,7 +158,7 @@ class DonationController extends Controller
                         'last_page' => 1,
                     ],
                 ],
-            ], 200);
+            ], 500);
         }
     }
 
@@ -190,7 +188,7 @@ class DonationController extends Controller
                     'userId' => $donation->user_id,
                     'nama' => $donation->nama,
                     'kategori' => $donation->kategori,
-                    'jumlah' => $donation->jumlah,
+                    'jumlah' => (int) $donation->jumlah,
                     'deskripsi' => $donation->deskripsi,
                     'lokasi' => $donation->lokasi,
                     'image' => $donation->image,
@@ -230,7 +228,7 @@ class DonationController extends Controller
                     'userId' => $donation->user_id,
                     'nama' => $donation->nama,
                     'kategori' => $donation->kategori,
-                    'jumlah' => $donation->jumlah,
+                    'jumlah' => (int) $donation->jumlah,
                     'deskripsi' => $donation->deskripsi,
                     'lokasi' => $donation->lokasi,
                     'image' => $donation->image,
@@ -270,15 +268,26 @@ class DonationController extends Controller
 
             DB::beginTransaction();
 
-            $updateData = $request->only([
-                'nama',
-                'kategori',
-                'jumlah',
-                'deskripsi',
-                'lokasi',
-                'status',
-            ]);
-
+            $updateData = [];
+            
+            if ($request->has('nama')) {
+                $updateData['nama'] = $request->nama;
+            }
+            if ($request->has('kategori')) {
+                $updateData['kategori'] = $request->kategori;
+            }
+            if ($request->has('jumlah')) {
+                $updateData['jumlah'] = $request->jumlah;
+            }
+            if ($request->has('deskripsi')) {
+                $updateData['deskripsi'] = $request->deskripsi;
+            }
+            if ($request->has('lokasi')) {
+                $updateData['lokasi'] = $request->lokasi;
+            }
+            if ($request->has('status')) {
+                $updateData['status'] = $request->status;
+            }
             if ($request->has('image')) {
                 $updateData['image'] = $request->image;
             }
@@ -295,7 +304,7 @@ class DonationController extends Controller
                     'userId' => $donation->user_id,
                     'nama' => $donation->nama,
                     'kategori' => $donation->kategori,
-                    'jumlah' => $donation->jumlah,
+                    'jumlah' => (int) $donation->jumlah,
                     'deskripsi' => $donation->deskripsi,
                     'lokasi' => $donation->lokasi,
                     'image' => $donation->image,
@@ -396,7 +405,7 @@ class DonationController extends Controller
                     'userId' => $donation->user_id,
                     'nama' => $donation->nama,
                     'kategori' => $donation->kategori,
-                    'jumlah' => $donation->jumlah,
+                    'jumlah' => (int) $donation->jumlah,
                     'deskripsi' => $donation->deskripsi,
                     'lokasi' => $donation->lokasi,
                     'image' => $donation->image,

@@ -1,6 +1,10 @@
 import { donationAPI } from './api';
 
-let abortController = null;
+const activeRequests = new Map();
+
+const createRequestKey = (endpoint, params) => {
+  return `${endpoint}_${JSON.stringify(params)}`;
+};
 
 export const createDonasi = async (donasiData) => {
   try {
@@ -13,28 +17,32 @@ export const createDonasi = async (donasiData) => {
 };
 
 export const getAllDonasi = async (params = {}) => {
-  try {
-    if (abortController) {
-      abortController.abort();
-    }
-    abortController = new AbortController();
-
-    const response = await donationAPI.getAll(params);
-    
-    if (!response.data || !response.data.success) {
-      return [];
-    }
-
-    const donations = response.data.data?.data || [];
-    return Array.isArray(donations) ? donations : [];
-  } catch (error) {
-    if (error.name === 'AbortError' || error.code === 'ECONNABORTED') {
-      console.log('Request cancelled');
-      return [];
-    }
-    console.error('Error fetching donations:', error);
-    return [];
+  const requestKey = createRequestKey('donations', params);
+  
+  if (activeRequests.has(requestKey)) {
+    return activeRequests.get(requestKey);
   }
+
+  const requestPromise = (async () => {
+    try {
+      const response = await donationAPI.getAll(params);
+      
+      if (!response.data || !response.data.success) {
+        return [];
+      }
+
+      const donations = response.data.data?.data || [];
+      return Array.isArray(donations) ? donations : [];
+    } catch (error) {
+      console.error('Error fetching donations:', error);
+      return [];
+    } finally {
+      activeRequests.delete(requestKey);
+    }
+  })();
+
+  activeRequests.set(requestKey, requestPromise);
+  return requestPromise;
 };
 
 export const getDonasiByIdService = async (id) => {
@@ -68,31 +76,35 @@ export const deleteDonasiService = async (id) => {
 };
 
 export const getMyDonasi = async () => {
-  try {
-    if (abortController) {
-      abortController.abort();
-    }
-    abortController = new AbortController();
-
-    const response = await donationAPI.getMyDonations();
-    
-    if (!response.data || !response.data.success) {
-      return [];
-    }
-
-    const donations = response.data.data?.data || [];
-    return Array.isArray(donations) ? donations : [];
-  } catch (error) {
-    if (error.name === 'AbortError' || error.code === 'ECONNABORTED') {
-      console.log('Request cancelled');
-      return [];
-    }
-    if (error.response?.status === 401) {
-      return [];
-    }
-    console.error('Error fetching my donations:', error);
-    return [];
+  const requestKey = 'my-donations';
+  
+  if (activeRequests.has(requestKey)) {
+    return activeRequests.get(requestKey);
   }
+
+  const requestPromise = (async () => {
+    try {
+      const response = await donationAPI.getMyDonations();
+      
+      if (!response.data || !response.data.success) {
+        return [];
+      }
+
+      const donations = response.data.data?.data || [];
+      return Array.isArray(donations) ? donations : [];
+    } catch (error) {
+      if (error.response?.status === 401) {
+        return [];
+      }
+      console.error('Error fetching my donations:', error);
+      return [];
+    } finally {
+      activeRequests.delete(requestKey);
+    }
+  })();
+
+  activeRequests.set(requestKey, requestPromise);
+  return requestPromise;
 };
 
 export const updateDonasiStatus = async (id, status) => {

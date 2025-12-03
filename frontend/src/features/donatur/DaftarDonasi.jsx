@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getMyDonasi } from "../../services/donasiService";
-import { FiEdit2, FiPackage, FiMapPin, FiCalendar } from 'react-icons/fi';
+import { FiEdit2, FiPackage, FiMapPin, FiCalendar, FiAlertCircle } from 'react-icons/fi';
 
 const DaftarDonasi = () => {
   const [donasi, setDonasi] = useState([]);
@@ -9,29 +9,19 @@ const DaftarDonasi = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    let mounted = true;
-
     const fetchDonasi = async () => {
       try {
         setLoading(true);
         const data = await getMyDonasi();
-        if (mounted) {
-          setDonasi(data);
-        }
+        setDonasi(data);
       } catch (error) {
         console.error("Gagal mengambil data donasi:", error);
       } finally {
-        if (mounted) {
-          setLoading(false);
-        }
+        setLoading(false);
       }
     };
 
     fetchDonasi();
-
-    return () => {
-      mounted = false;
-    };
   }, []);
 
   const getCategoryIcon = (category) => {
@@ -62,9 +52,13 @@ const DaftarDonasi = () => {
       <h1 className="text-2xl font-semibold mb-4">Daftar Donasi Saya</h1>
 
       {donasi.length === 0 ? (
-        <p className="text-gray-500 mt-4 text-center">
-          Anda belum memiliki donasi yang aktif.
-        </p>
+        <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
+          <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <FiAlertCircle className="text-5xl text-gray-400" />
+          </div>
+          <h3 className="text-2xl font-bold text-gray-900 mb-2">Belum Ada Donasi</h3>
+          <p className="text-gray-600">Anda belum memiliki donasi yang aktif.</p>
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {donasi.map((item) => (

@@ -14,44 +14,38 @@ const DashboardDonatur = () => {
   });
   const [filter, setFilter] = useState('all');
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    let mounted = true;
-
     const loadDonations = async () => {
       try {
         setLoading(true);
         const userDonations = await getMyDonasi();
         
-        if (mounted) {
-          setDonations(userDonations);
-          setStats({
-            total: userDonations.length,
-            active: userDonations.filter(d => d.status === 'aktif').length,
-            completed: userDonations.filter(d => d.status === 'selesai').length
-          });
-        }
+        setDonations(userDonations);
+        setStats({
+          total: userDonations.length,
+          active: userDonations.filter(d => d.status === 'aktif').length,
+          completed: userDonations.filter(d => d.status === 'selesai').length
+        });
       } catch (error) {
         console.error('Error loading donations:', error);
       } finally {
-        if (mounted) {
-          setLoading(false);
-        }
+        setLoading(false);
       }
     };
 
     loadDonations();
-
-    return () => {
-      mounted = false;
-    };
   }, []);
 
   const handleDelete = async (id) => {
+    if (deleting) return;
+    
     if (!window.confirm('Apakah Anda yakin ingin menghapus donasi ini?')) {
       return;
     }
 
+    setDeleting(true);
     try {
       await deleteDonasiService(id);
       alert('Donasi berhasil dihapus!');
@@ -65,6 +59,8 @@ const DashboardDonatur = () => {
       });
     } catch (error) {
       alert(error.message || 'Gagal menghapus donasi');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -119,7 +115,7 @@ const DashboardDonatur = () => {
         <div className="max-w-7xl mx-auto px-6 md:px-8 py-12">
           <div className="mb-8">
             <h1 className="text-4xl md:text-5xl font-bold mb-3">
-              Selamat Datang, {user?.name}! 👋
+              Selamat Datang, {user?.name}!
             </h1>
             <p className="text-xl text-white/80">
               Kelola donasi Anda dan lihat dampak kebaikan yang telah Anda buat
@@ -310,7 +306,8 @@ const DashboardDonatur = () => {
                     </Link>
                     <button
                       onClick={() => handleDelete(donation.id)}
-                      className="flex-1 flex items-center justify-center space-x-2 px-4 py-2.5 bg-red-50 text-red-600 font-semibold rounded-xl hover:bg-red-100 transition-all"
+                      disabled={deleting}
+                      className="flex-1 flex items-center justify-center space-x-2 px-4 py-2.5 bg-red-50 text-red-600 font-semibold rounded-xl hover:bg-red-100 transition-all disabled:opacity-50"
                     >
                       <FiTrash2 />
                       <span>Hapus</span>
