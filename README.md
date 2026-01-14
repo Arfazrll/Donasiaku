@@ -18,13 +18,7 @@
 
 </div>
 
----
 
-## ✨ Application Preview
-
-<div align="center">
-  <img src="https://via.placeholder.com/800x400.png?text=Put+Your+App+Demo+GIF+Here" alt="Application Demo" style="border-radius: 10px; box-shadow: 0px 4px 12px rgba(0,0,0,0.1);">
-</div>
 
 <br>
 
@@ -37,7 +31,6 @@
 6. [Roadmap](#-roadmap)
 7. [License](#-license)
 
----
 
 ## 💡 About The Project
 
@@ -48,7 +41,7 @@
 
 Built with a Monorepo architecture, combining the robustness of **Laravel** (API) and the interactivity of **React** (UI).
 
----
+
 
 ## 🛠 Tech Stack
 
@@ -65,7 +58,7 @@ Built with a Monorepo architecture, combining the robustness of **Laravel** (API
 * **HTTP Client:** Axios
 * **Routing:** React Router DOM
 
----
+
 
 ## 🚀 Key Features
 
@@ -84,7 +77,7 @@ Built with a Monorepo architecture, combining the robustness of **Laravel** (API
 - [x] **Real-time Validation:** Form inputs are validated on both client and server.
 - [x] **Responsive Design:** Optimized for Desktop, Tablet, and Mobile.
 
----
+
 
 ## ⚡ Getting Started
 
@@ -141,7 +134,7 @@ npm run dev
 
 > The App should now be running at `http://localhost:5173` and the API at `http://localhost:8000`.
 
----
+
 
 ## 🔌 API Reference
 
@@ -157,7 +150,6 @@ Here are the main endpoints available in the backend:
 | `POST` | `/api/chat/send` | Send a message | ✅ |
 | `GET` | `/api/user` | Get current user profile | ✅ |
 
----
 
 ## 🗺 Roadmap
 
@@ -169,7 +161,7 @@ We have exciting plans for the future of **Donasiaku**:
 * [ ] **Delivery Integration:** Partner with logistics APIs (e.g., GoSend/GrabExpress).
 * [ ] **Dark Mode:** Enhanced UI theming.
 
----
+
 
 ## 📂 Project Structure
 
@@ -188,7 +180,6 @@ donasiaku/
 
 ```
 
----
 
 ## 📄 License
 
